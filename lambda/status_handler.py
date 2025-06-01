@@ -21,12 +21,22 @@ def lambda_handler(event, context):
         items = response.get('Items', [])
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': 'GET,OPTIONS'
+            },
             'body': json.dumps({'stories': items})
         }
 
     except Exception as e:
         return {
             'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': 'GET,OPTIONS'
+            },
             'body': json.dumps({'error': str(e)})
         }
