@@ -13,14 +13,21 @@ table = dynamodb.Table(TABLE_NAME)
 
 def categorize_transcript(text):
     prompt = f"""
-You are a Lean and Six Sigma expert. Classify the following voice transcript into ONE of the following categories:
+You are a Lean and Six Sigma expert at a delivery station. Classify the following voice transcript into ONE of the following categories:
 
 - Standard Work
-- 5S
-- Error Proofing
+- 5S / Workplace Organization
+- Error Proofing / Poka-Yoke
 - Andon / Escalation
-- Safety
-- General
+- Safety & Ergonomics
+- General Kaizen
+- Flow Efficiency / Bottlenecks
+- Takt Time & Staffing Balance
+- Defect Detection / Quality at Source
+- Visual Management
+- Training & Cross-Skilling
+- Voice of Associate (VoA)
+- Customer Obsession
 
 Return ONLY the category name.
 
@@ -36,7 +43,7 @@ Transcript:
             "messages": [
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 20,
+            "max_tokens": 30,
             "temperature": 0.2
         })
     )
@@ -54,7 +61,7 @@ def lambda_handler(event, context):
 
         for item in response.get("Items", []):
             story_id = item['story_id']
-            timestamp = item['timestamp']  # Required because timestamp is part of the key
+            timestamp = item['timestamp']
             job_name = f"kaizen-{story_id}"
 
             try:
