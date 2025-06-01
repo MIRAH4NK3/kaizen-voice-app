@@ -1,21 +1,35 @@
+# ---------------------------------------------
+# API Gateway (HTTP API v2) with CORS enabled
+# ---------------------------------------------
+
 resource "aws_apigatewayv2_api" "http_api" {
   name          = "kaizen-http-api"
   protocol_type = "HTTP"
+
+  cors_configuration {
+    # Allow your Amplify frontend; replace "*" with your exact domain if desired:
+    allow_origins = ["*"]
+    # Since you only have a POST /kaizen route today, include POST and OPTIONS
+    allow_methods = ["POST", "OPTIONS"]
+    # Any headers your frontend will send (e.g., for JSON payloads or Authorization)
+    allow_headers = ["Content-Type", "Authorization"]
+    # Cache the preflight response for 1 hour (3600 seconds)
+    max_age = 3600
+  }
 }
 
 resource "aws_apigatewayv2_integration" "lambda_integration" {
-  api_id           = aws_apigatewayv2_api.http_api.id
-  integration_type = "AWS_PROXY"
-  integration_uri  = aws_lambda_function.kaizen_story_handler.invoke_arn
-  integration_method = "POST"
-  payload_format_version = "2.0"
+  api_id                    = aws_apigatewayv2_api.http_api.id
+  integration_type          = "AWS_PROXY"
+  integration_uri           = aws_lambda_function.kaizen_story_handler.invoke_arn
+  integration_method        = "POST"
+  payload_format_version    = "2.0"
 }
 
 resource "aws_apigatewayv2_route" "post_kaizen" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "POST /kaizen"
-
-  target = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
 resource "aws_apigatewayv2_stage" "default" {
