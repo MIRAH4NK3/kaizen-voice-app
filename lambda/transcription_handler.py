@@ -2,8 +2,30 @@ import json
 import boto3
 import urllib.parse
 import time
+import random
 
-time.sleep(1.5)  # 1.5 seconds between calls
+def safe_invoke_bedrock(prompt):
+    for attempt in range(5):
+        try:
+            response = bedrock_runtime.invoke_model(
+                modelId='anthropic.claude-3-sonnet-20240229-v1:0',
+                contentType='application/json',
+                accept='application/json',
+                body=json.dumps({
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 200,
+                    "temperature": 0.2
+                })
+            )
+            return response
+        except bedrock_runtime.exceptions.ThrottlingException as e:
+            wait = (2 ** attempt) + random.uniform(0, 1)
+            print(f"⏳ Throttled, retrying in {wait:.1f}s...")
+            time.sleep(wait)
+        except Exception as e:
+            raise e
+    raise Exception("⚠️ Max retries exceeded for Bedrock")
 
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
@@ -13,6 +35,7 @@ bedrock_runtime = boto3.client('bedrock-runtime', region_name='eu-central-1')
 BUCKET_NAME = 'kaizen-voice-raw-dresden'
 TABLE_NAME = 'kaizen_success_story_dresden_dev'
 table = dynamodb.Table(TABLE_NAME)
+
 
 def analyze_transcript(text):
     prompt = f"""
@@ -34,7 +57,7 @@ Analyze the following transcript and extract:
    - Voice of Associate (VoA)
    - Customer Obsession
 2. Name of the associate (first name if possible)
-3. Shift or department (e.g. Night Shift, Early Shift, HR, ORM, Drivers)
+3. Shift or department (e.g. Night Shift, Early Shift, HR, ORM, Drivers). If not mentioned, make a likely guess based on context clues or current time.
 
 Return the result in this JSON format:
 {{
@@ -46,22 +69,11 @@ Return the result in this JSON format:
 Transcript:
 {text}
 """
-    response = bedrock_runtime.invoke_model(
-        modelId='anthropic.claude-3-sonnet-20240229-v1:0',
-        contentType='application/json',
-        accept='application/json',
-        body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 200,
-            "temperature": 0.2
-        })
-    )
-
+    response = safe_invoke_bedrock(prompt)
     response_body = json.loads(response['body'].read())
     result = json.loads(response_body['content'][0]['text'])
     return result  # includes category, name, shift
-
+    
 def lambda_handler(event, context):
     try:
         # Scan for all stories in progress
