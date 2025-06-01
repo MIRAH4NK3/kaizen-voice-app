@@ -5,10 +5,44 @@ import urllib.parse
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
 transcribe = boto3.client('transcribe')
+bedrock_runtime = boto3.client('bedrock-runtime', region_name='eu-central-1')
 
 BUCKET_NAME = 'kaizen-voice-raw-dresden'
 TABLE_NAME = 'kaizen_success_story_dresden_dev'
 table = dynamodb.Table(TABLE_NAME)
+
+def categorize_transcript(text):
+    prompt = f"""
+You are a Lean and Six Sigma expert. Classify the following voice transcript into ONE of the following categories:
+
+- Standard Work
+- 5S
+- Error Proofing
+- Andon / Escalation
+- Safety
+- General
+
+Return ONLY the category name.
+
+Transcript:
+{text}
+"""
+
+    response = bedrock_runtime.invoke_model(
+        modelId='anthropic.claude-3-sonnet-20240229-v1:0',
+        contentType='application/json',
+        accept='application/json',
+        body=json.dumps({
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": 20,
+            "temperature": 0.2
+        })
+    )
+
+    response_body = json.loads(response['body'].read())
+    return response_body['content'][0]['text'].strip()
 
 def lambda_handler(event, context):
     try:
@@ -20,7 +54,7 @@ def lambda_handler(event, context):
 
         for item in response.get("Items", []):
             story_id = item['story_id']
-            timestamp = item['timestamp']  # Required because timestamp is now part of the key
+            timestamp = item['timestamp']  # Required because timestamp is part of the key
             job_name = f"kaizen-{story_id}"
 
             try:
@@ -34,16 +68,18 @@ def lambda_handler(event, context):
                     )['Body'].read())
 
                     text = transcript_obj['results']['transcripts'][0]['transcript']
+                    category = categorize_transcript(text)
 
                     table.update_item(
                         Key={'story_id': story_id, 'timestamp': timestamp},
-                        UpdateExpression="SET transcription_status = :done, transcript = :t",
+                        UpdateExpression="SET transcription_status = :done, transcript = :t, category = :c",
                         ExpressionAttributeValues={
                             ':done': 'COMPLETED',
-                            ':t': text
+                            ':t': text,
+                            ':c': category
                         }
                     )
-                    print(f"✅ Story {story_id} updated with transcript.")
+                    print(f"✅ Story {story_id} updated and categorized as {category}.")
 
                 elif status == 'FAILED':
                     table.update_item(
