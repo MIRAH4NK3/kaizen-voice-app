@@ -12,12 +12,17 @@ table = dynamodb.Table('kaizen_success_story_dresden_dev')
 BUCKET_NAME = 'kaizen-voice-raw-dresden'
 
 def lambda_handler(event, context):
-    # 🐞 Debug print to CloudWatch
     print("RAW EVENT:")
     print(json.dumps(event))
 
     try:
-        audio_base64 = event['audio_base64']
+        # Handle case where body is a stringified JSON
+        if 'body' in event:
+            body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
+        else:
+            body = event
+
+        audio_base64 = body['audio_base64']
         audio_bytes = base64.b64decode(audio_base64)
         story_id = str(uuid.uuid4())
         timestamp = datetime.utcnow().isoformat()
@@ -54,6 +59,8 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
+        print("ERROR:")
+        print(str(e))
         return {
             'statusCode': 500,
             'body': json.dumps({'error': str(e)})
