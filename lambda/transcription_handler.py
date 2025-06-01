@@ -71,7 +71,7 @@ Transcript:
     response = safe_invoke_bedrock(prompt)
     response_body = json.loads(response['body'].read())
     result = json.loads(response_body['content'][0]['text'])
-    return result  # includes category, name, shift
+    return result
 
 def lambda_handler(event, context):
     try:
@@ -133,7 +133,12 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+                'Content-Type': 'application/json'
+            },
             'body': json.dumps('Finished transcription handler run.')
         }
 
@@ -142,6 +147,11 @@ def lambda_handler(event, context):
         print(str(e))
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json'},
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
+                'Content-Type': 'application/json'
+            },
             'body': json.dumps({'error': str(e)})
         }
