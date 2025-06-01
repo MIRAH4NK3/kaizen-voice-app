@@ -34,7 +34,7 @@ resource "aws_apigatewayv2_route" "post_kaizen" {
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http_api.id
-  name        = "$default"
+  name        = "v1"
   auto_deploy = true
 }
 
