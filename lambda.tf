@@ -96,7 +96,7 @@ resource "aws_lambda_function" "status_handler" {
   source_code_hash = filebase64sha256("${path.module}/functions/status_handler.zip")
   handler       = "status_handler.lambda_handler"
   runtime       = "python3.12"
-  role          = aws_iam_role.lambda_exec.arn
+  role = aws_iam_role.lambda_exec_role.arn
   memory_size   = 128
   timeout       = 10
 
