@@ -11,25 +11,34 @@ BUCKET_NAME = 'kaizen-voice-raw-dresden'
 TABLE_NAME = 'kaizen_success_story_dresden_dev'
 table = dynamodb.Table(TABLE_NAME)
 
-def categorize_transcript(text):
+def analyze_transcript(text):
     prompt = f"""
-You are a Lean and Six Sigma expert at a delivery station. Classify the following voice transcript into ONE of the following categories:
+You are a Lean and Six Sigma operations analyst helping categorize employee voice reports from a delivery station.
 
-- Standard Work
-- 5S / Workplace Organization
-- Error Proofing / Poka-Yoke
-- Andon / Escalation
-- Safety & Ergonomics
-- General Kaizen
-- Flow Efficiency / Bottlenecks
-- Takt Time & Staffing Balance
-- Defect Detection / Quality at Source
-- Visual Management
-- Training & Cross-Skilling
-- Voice of Associate (VoA)
-- Customer Obsession
+Analyze the following transcript and extract:
+1. Category — choose from:
+   - Standard Work
+   - 5S / Workplace Organization
+   - Error Proofing / Poka-Yoke
+   - Andon / Escalation
+   - Safety & Ergonomics
+   - General Kaizen
+   - Flow Efficiency / Bottlenecks
+   - Takt Time & Staffing Balance
+   - Defect Detection / Quality at Source
+   - Visual Management
+   - Training & Cross-Skilling
+   - Voice of Associate (VoA)
+   - Customer Obsession
+2. Name of the associate (first name if possible)
+3. Shift or department (e.g. Night Shift, Early Shift, HR, ORM, Drivers)
 
-Return ONLY the category name.
+Return the result in this JSON format:
+{{
+  "category": "Example Category",
+  "name": "FirstName",
+  "shift": "Night Shift"
+}}
 
 Transcript:
 {text}
@@ -40,16 +49,15 @@ Transcript:
         contentType='application/json',
         accept='application/json',
         body=json.dumps({
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-            "max_tokens": 30,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 200,
             "temperature": 0.2
         })
     )
 
     response_body = json.loads(response['body'].read())
-    return response_body['content'][0]['text'].strip()
+    result = json.loads(response_body['content'][0]['text'])
+    return result  # includes category, name, shift
 
 def lambda_handler(event, context):
     try:
@@ -75,18 +83,26 @@ def lambda_handler(event, context):
                     )['Body'].read())
 
                     text = transcript_obj['results']['transcripts'][0]['transcript']
-                    category = categorize_transcript(text)
+                    result = analyze_transcript(text)
 
                     table.update_item(
                         Key={'story_id': story_id, 'timestamp': timestamp},
-                        UpdateExpression="SET transcription_status = :done, transcript = :t, category = :c",
+                        UpdateExpression="""
+                            SET transcription_status = :done,
+                                transcript = :t,
+                                category = :c,
+                                name = :n,
+                                shift = :s
+                        """,
                         ExpressionAttributeValues={
                             ':done': 'COMPLETED',
                             ':t': text,
-                            ':c': category
+                            ':c': result['category'],
+                            ':n': result['name'],
+                            ':s': result['shift']
                         }
                     )
-                    print(f"✅ Story {story_id} updated and categorized as {category}.")
+                    print(f"✅ Story {story_id} updated with category '{result['category']}', name '{result['name']}', shift '{result['shift']}'.")
 
                 elif status == 'FAILED':
                     table.update_item(
