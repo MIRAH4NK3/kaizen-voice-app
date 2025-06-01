@@ -132,14 +132,14 @@ def lambda_handler(event, context):
                 print(f"Error processing {story_id}: {str(e)}")
 
         return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-            },
-            'body': json.dumps('Finished transcription handler run.')
-        }
+    'statusCode': 200,
+    'headers': {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': 'POST,OPTIONS'
+    },
+    'body': json.dumps('Finished transcription handler run.')
+}
 
     except Exception as e:
         print("UNHANDLED ERROR:")
@@ -148,7 +148,7 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Headers': '*',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
             },
             'body': json.dumps({'error': str(e)})
