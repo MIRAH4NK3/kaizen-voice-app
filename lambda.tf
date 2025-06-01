@@ -90,6 +90,24 @@ resource "aws_lambda_function" "transcription_handler" {
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 }
 
+resource "aws_lambda_function" "status_handler" {
+  function_name = "kaizen_status_handler"
+  filename      = "${path.module}/functions/status_handler.zip"
+  source_code_hash = filebase64sha256("${path.module}/functions/status_handler.zip")
+  handler       = "status_handler.lambda_handler"
+  runtime       = "python3.12"
+  role          = aws_iam_role.lambda_exec.arn
+  memory_size   = 128
+  timeout       = 10
+
+  environment {
+    variables = {
+      TABLE_NAME = "kaizen_success_story_dresden_dev"
+    }
+  }
+}
+
+
 resource "aws_cloudwatch_log_group" "transcription_handler_logs" {
   name              = "/aws/lambda/kaizen_transcription_handler"
   retention_in_days = 7
