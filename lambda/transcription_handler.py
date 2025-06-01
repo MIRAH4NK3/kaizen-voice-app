@@ -1,6 +1,9 @@
 import json
 import boto3
 import urllib.parse
+import time
+
+time.sleep(1.5)  # 1.5 seconds between calls
 
 s3 = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
