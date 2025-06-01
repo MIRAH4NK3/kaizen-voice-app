@@ -3,7 +3,9 @@ import boto3
 import os
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table(os.environ['TABLE_NAME'])
+
+TABLE_NAME = 'kaizen_success_story_dresden_dev'
+table = dynamodb.Table(TABLE_NAME)
 
 def lambda_handler(event, context):
     try:
