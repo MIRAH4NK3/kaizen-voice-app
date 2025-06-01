@@ -4,6 +4,15 @@ import urllib.parse
 import time
 import random
 
+s3 = boto3.client('s3')
+dynamodb = boto3.resource('dynamodb')
+transcribe = boto3.client('transcribe')
+bedrock_runtime = boto3.client('bedrock-runtime', region_name='eu-central-1')
+
+BUCKET_NAME = 'kaizen-voice-raw-dresden'
+TABLE_NAME = 'kaizen_success_story_dresden_dev'
+table = dynamodb.Table(TABLE_NAME)
+
 def safe_invoke_bedrock(prompt):
     for attempt in range(5):
         try:
@@ -26,15 +35,6 @@ def safe_invoke_bedrock(prompt):
         except Exception as e:
             raise e
     raise Exception("⚠️ Max retries exceeded for Bedrock")
-
-s3 = boto3.client('s3')
-dynamodb = boto3.resource('dynamodb')
-transcribe = boto3.client('transcribe')
-bedrock_runtime = boto3.client('bedrock-runtime', region_name='eu-central-1')
-
-BUCKET_NAME = 'kaizen-voice-raw-dresden'
-TABLE_NAME = 'kaizen_success_story_dresden_dev'
-table = dynamodb.Table(TABLE_NAME)
 
 def analyze_transcript(text):
     prompt = f"""
@@ -132,14 +132,14 @@ def lambda_handler(event, context):
                 print(f"Error processing {story_id}: {str(e)}")
 
         return {
-    'statusCode': 200,
-    'headers': {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': '*',
-        'Access-Control-Allow-Methods': 'POST,OPTIONS'
-    },
-    'body': json.dumps('Finished transcription handler run.')
-}
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
+            'body': json.dumps('Finished transcription handler run.')
+        }
 
     except Exception as e:
         print("UNHANDLED ERROR:")
