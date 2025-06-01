@@ -1,12 +1,22 @@
 import json
 import boto3
+import os
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('kaizen_success_story_dresden_dev')
+table = dynamodb.Table(os.environ['TABLE_NAME'])
 
 def lambda_handler(event, context):
     try:
-        response = table.scan()
+        query_params = event.get("queryStringParameters", {})
+        status_filter = query_params.get("status") if query_params else None
+
+        if status_filter:
+            response = table.scan(
+                FilterExpression="transcription_status = :status",
+                ExpressionAttributeValues={":status": status_filter}
+            )
+        else:
+            response = table.scan()
 
         items = response.get('Items', [])
         return {
