@@ -45,7 +45,7 @@ def lambda_handler(event, context):
             OutputBucketName=BUCKET_NAME,
             OutputKey=f"transcripts/{story_id}.json"
         )
-print("📥 Attempting to write to DynamoDB...")
+
         table.put_item(Item={
     'story_id': story_id,
     'timestamp': timestamp,
