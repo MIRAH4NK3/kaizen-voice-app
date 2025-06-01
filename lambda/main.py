@@ -47,12 +47,16 @@ def lambda_handler(event, context):
         )
 
         table.put_item(Item={
-            'story_id': story_id,
-            'timestamp': timestamp,
-            's3_key': s3_key,
-            'transcription_status': 'IN_PROGRESS'
-        })
+    'story_id': story_id,
+    'timestamp': timestamp,
+    's3_key': s3_key,
+    'transcription_status': 'IN_PROGRESS',
+    'category': 'Uncategorized',  # Placeholder for auto-classification
+    'name': 'Unknown',            # Will extract from voice later
+    'shift': 'Unassigned'         # Will extract from voice later
+})
 
+  
         return {
             'statusCode': 200,
             'body': json.dumps({'message': 'Story saved!', 'id': story_id})
