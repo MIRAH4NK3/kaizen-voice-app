@@ -16,7 +16,6 @@ def lambda_handler(event, context):
     print(json.dumps(event))
 
     try:
-        # Handle case where body is a stringified JSON
         if 'body' in event:
             body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
         else:
@@ -46,19 +45,25 @@ def lambda_handler(event, context):
             OutputKey=f"transcripts/{story_id}.json"
         )
 
+        print("📥 Attempting to write to DynamoDB...")
         table.put_item(Item={
-    'story_id': story_id,
-    'timestamp': timestamp,
-    's3_key': s3_key,
-    'transcription_status': 'IN_PROGRESS',
-    'category': 'Uncategorized',  # Placeholder for auto-classification
-    'name': 'Unknown',            # Will extract from voice later
-    'shift': 'Unassigned'         # Will extract from voice later
-})
-print("✅ Successfully wrote to DynamoDB.")
-  
+            'story_id': story_id,
+            'timestamp': timestamp,
+            's3_key': s3_key,
+            'transcription_status': 'IN_PROGRESS',
+            'category': 'Uncategorized',
+            'name': 'Unknown',
+            'shift': 'Unassigned'
+        })
+        print("✅ Successfully wrote to DynamoDB.")
+
         return {
             'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
             'body': json.dumps({'message': 'Story saved!', 'id': story_id})
         }
 
@@ -67,5 +72,10 @@ print("✅ Successfully wrote to DynamoDB.")
         print(str(e))
         return {
             'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
             'body': json.dumps({'error': str(e)})
         }
