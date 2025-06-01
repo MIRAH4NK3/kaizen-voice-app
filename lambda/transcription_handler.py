@@ -86,22 +86,26 @@ def lambda_handler(event, context):
                     result = analyze_transcript(text)
 
                     table.update_item(
-                        Key={'story_id': story_id, 'timestamp': timestamp},
-                        UpdateExpression="""
-                            SET transcription_status = :done,
-                                transcript = :t,
-                                category = :c,
-                                name = :n,
-                                shift = :s
-                        """,
-                        ExpressionAttributeValues={
-                            ':done': 'COMPLETED',
-                            ':t': text,
-                            ':c': result['category'],
-                            ':n': result['name'],
-                            ':s': result['shift']
-                        }
-                    )
+    Key={'story_id': story_id, 'timestamp': timestamp},
+    UpdateExpression="""
+        SET transcription_status = :done,
+            transcript = :t,
+            category = :c,
+            #name = :n,
+            shift = :s
+    """,
+    ExpressionAttributeNames={
+        "#name": "name"
+    },
+    ExpressionAttributeValues={
+        ':done': 'COMPLETED',
+        ':t': text,
+        ':c': result['category'],
+        ':n': result['name'],
+        ':s': result['shift']
+    }
+)
+
                     print(f"✅ Story {story_id} updated with category '{result['category']}', name '{result['name']}', shift '{result['shift']}'.")
 
                 elif status == 'FAILED':
