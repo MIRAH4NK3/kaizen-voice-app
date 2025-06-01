@@ -45,14 +45,12 @@ def lambda_handler(event, context):
             OutputBucketName=BUCKET_NAME,
             OutputKey=f"transcripts/{story_id}.json"
         )
-
-        table.put_item(Item={
-            'id': story_id,
-            'timestamp': timestamp,
-            's3_key': s3_key,
-            'transcription_status': 'IN_PROGRESS'
-        })
-
+table.put_item(Item={
+    'story_id': story_id,
+    'timestamp': timestamp,
+    's3_key': s3_key,
+    'transcription_status': 'IN_PROGRESS'
+})
         return {
             'statusCode': 200,
             'body': json.dumps({'message': 'Story saved!', 'id': story_id})
