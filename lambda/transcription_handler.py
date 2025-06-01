@@ -36,7 +36,6 @@ BUCKET_NAME = 'kaizen-voice-raw-dresden'
 TABLE_NAME = 'kaizen_success_story_dresden_dev'
 table = dynamodb.Table(TABLE_NAME)
 
-
 def analyze_transcript(text):
     prompt = f"""
 You are a Lean and Six Sigma operations analyst helping categorize employee voice reports from a delivery station.
@@ -73,10 +72,9 @@ Transcript:
     response_body = json.loads(response['body'].read())
     result = json.loads(response_body['content'][0]['text'])
     return result  # includes category, name, shift
-    
+
 def lambda_handler(event, context):
     try:
-        # Scan for all stories in progress
         response = table.scan(
             FilterExpression="transcription_status = :status",
             ExpressionAttributeValues={":status": "IN_PROGRESS"}
@@ -101,26 +99,25 @@ def lambda_handler(event, context):
                     result = analyze_transcript(text)
 
                     table.update_item(
-    Key={'story_id': story_id, 'timestamp': timestamp},
-    UpdateExpression="""
-        SET transcription_status = :done,
-            transcript = :t,
-            category = :c,
-            #name = :n,
-            shift = :s
-    """,
-    ExpressionAttributeNames={
-        "#name": "name"
-    },
-    ExpressionAttributeValues={
-        ':done': 'COMPLETED',
-        ':t': text,
-        ':c': result['category'],
-        ':n': result['name'],
-        ':s': result['shift']
-    }
-)
-
+                        Key={'story_id': story_id, 'timestamp': timestamp},
+                        UpdateExpression="""
+                            SET transcription_status = :done,
+                                transcript = :t,
+                                category = :c,
+                                #name = :n,
+                                shift = :s
+                        """,
+                        ExpressionAttributeNames={
+                            "#name": "name"
+                        },
+                        ExpressionAttributeValues={
+                            ':done': 'COMPLETED',
+                            ':t': text,
+                            ':c': result['category'],
+                            ':n': result['name'],
+                            ':s': result['shift']
+                        }
+                    )
                     print(f"✅ Story {story_id} updated with category '{result['category']}', name '{result['name']}', shift '{result['shift']}'.")
 
                 elif status == 'FAILED':
@@ -136,6 +133,11 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
             'body': json.dumps('Finished transcription handler run.')
         }
 
@@ -144,5 +146,10 @@ def lambda_handler(event, context):
         print(str(e))
         return {
             'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+            },
             'body': json.dumps({'error': str(e)})
         }
