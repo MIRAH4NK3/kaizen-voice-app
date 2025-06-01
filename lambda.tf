@@ -78,3 +78,20 @@ resource "aws_lambda_function" "kaizen_story_handler" {
     }
   }
 }
+
+resource "aws_lambda_function" "transcription_handler" {
+  function_name = "kaizen_transcription_handler"
+  role          = aws_iam_role.lambda_exec_role.arn
+  handler       = "transcription_handler.lambda_handler"
+  runtime       = "python3.12"
+  timeout       = 30
+
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+}
+
+resource "aws_cloudwatch_log_group" "transcription_handler_logs" {
+  name              = "/aws/lambda/kaizen_transcription_handler"
+  retention_in_days = 7
+}
+
