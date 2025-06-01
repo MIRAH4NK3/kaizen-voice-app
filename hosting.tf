@@ -1,5 +1,9 @@
+locals {
+  safe_use_case = replace(var.use_case, "_", "-")
+}
+
 resource "aws_s3_bucket" "voice_app_hosting" {
-  bucket = "kaizen-voice-app-${var.station_name}-${var.use_case}-${var.environment}"
+  bucket = "kaizen-voice-app-${var.station_name}-${local.safe_use_case}-${var.environment}"
   force_destroy = true
 
   tags = {
