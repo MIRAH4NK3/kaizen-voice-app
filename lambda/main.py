@@ -12,6 +12,10 @@ table = dynamodb.Table('kaizen_success_story_dresden_dev')
 BUCKET_NAME = 'kaizen-voice-raw-dresden'
 
 def lambda_handler(event, context):
+    # 🐞 Debug print to CloudWatch
+    print("RAW EVENT:")
+    print(json.dumps(event))
+
     try:
         audio_base64 = event['audio_base64']
         audio_bytes = base64.b64decode(audio_base64)
