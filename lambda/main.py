@@ -45,7 +45,7 @@ def lambda_handler(event, context):
             OutputBucketName=BUCKET_NAME,
             OutputKey=f"transcripts/{story_id}.json"
         )
-
+print("📥 Attempting to write to DynamoDB...")
         table.put_item(Item={
     'story_id': story_id,
     'timestamp': timestamp,
@@ -55,7 +55,7 @@ def lambda_handler(event, context):
     'name': 'Unknown',            # Will extract from voice later
     'shift': 'Unassigned'         # Will extract from voice later
 })
-
+print("✅ Successfully wrote to DynamoDB.")
   
         return {
             'statusCode': 200,
