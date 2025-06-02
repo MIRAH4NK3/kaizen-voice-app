@@ -4,10 +4,58 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Kaizen Voice Recorder</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      padding: 2rem;
+      background-color: #f7f9fc;
+      color: #222;
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    em {
+      font-size: 1.1rem;
+      color: #444;
+    }
+
+    #recordButton {
+      font-size: 1.5rem;
+      padding: 1rem 2rem;
+      margin-top: 2rem;
+      background-color: #e53935;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    #recordButton:hover {
+      background-color: #d32f2f;
+    }
+
+    #status {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+      color: #2e7d32;
+    }
+
+    @media (max-width: 480px) {
+      #recordButton {
+        width: 90%;
+        font-size: 1.3rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <h2>🎙️ Voice Kaizen</h2>
-  <p><em>Say your name and what you're happy about today.</em></p>
+  <p><em>Please say: your name, your shift or department, and what you did today that made things better.</em></p>
 
   <button id="recordButton">🔴 Start Recording</button>
   <p id="status"></p>
@@ -55,7 +103,6 @@
               console.error(err);
               status.textContent = "❌ Error sending voice story.";
             } finally {
-              // Always stop all audio tracks
               stream.getTracks().forEach(track => track.stop());
               button.textContent = "🔴 Start Recording";
               mediaRecorder = null;
